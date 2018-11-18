@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Maze : MonoBehaviour {
 
-    public IntVector2 size;
+    public IntVector3 size;
 
     public MazeCell cellPrefab;
     public MazePassage passagePrefab;
@@ -12,30 +12,32 @@ public class Maze : MonoBehaviour {
 
     public float generationStepDelay;
 
-    private MazeCell[,] cells;
+    private MazeCell[,,] cells;
 
-    public IntVector2 RandomCoord
+    public IntVector3 RandomCoord
     {
         get
         {
-            return new IntVector2(Random.Range(0, size.x), Random.Range(0, size.z));
+            return new IntVector3(Random.Range(0, size.x), Random.Range(0, size.y), Random.Range(0, size.z));
         }
     }
 
-    public bool ContainsCoord(IntVector2 coord)
+    public bool ContainsCoord(IntVector3 coord)
     {
-        return coord.x >= 0 && coord.x < size.x && coord.z >= 0 && coord.z < size.z;
+        return coord.x >= 0 && coord.x < size.x && 
+            coord.y >=0 && coord.y < size.y &&
+            coord.z >= 0 && coord.z < size.z;
     }
 
-    public MazeCell GetCell(IntVector2 coord)
+    public MazeCell GetCell(IntVector3 coord)
     {
-        return cells[coord.x, coord.z];
+        return cells[coord.x, coord.y, coord.z];
     }
 
     public IEnumerator Generate()
     {
         WaitForSeconds delay = new WaitForSeconds(generationStepDelay);
-        cells = new MazeCell[size.x, size.z];
+        cells = new MazeCell[size.x, size.y, size.z];
         List<MazeCell> activeCells = new List<MazeCell>();
         DoFirstGenerationStep(activeCells);
         while (activeCells.Count > 0)
@@ -50,20 +52,28 @@ public class Maze : MonoBehaviour {
         activeCells.Add(CreateCell(RandomCoord));
     }
 
+    [Range(0f, 1f)]
+    public float wallProbability = 1f;
+
     private void DoNextGenerationStep(List<MazeCell> activeCells)
     {
+        //get last cell in active list
         int currentIndex = activeCells.Count - 1;
         MazeCell currentCell = activeCells[currentIndex];
+        //remove fullyInitialized cell
         if (currentCell.IsFullyInitialized)
         {
             activeCells.RemoveAt(currentIndex);
             return;
         }
+        //go random direction
         MazeDirection direction = currentCell.RandomUninitializedDirection;
-        IntVector2 coord = currentCell.coord + direction.ToIntVector2();
+        IntVector3 coord = currentCell.coord + direction.ToIntVector3();
+        //is coord in grid?
         if (ContainsCoord(coord))
         {
             MazeCell neighbor = GetCell(coord);
+            //is coord visited?
             if (neighbor == null)
             {
                 neighbor = CreateCell(coord);
@@ -72,7 +82,15 @@ public class Maze : MonoBehaviour {
             }
             else
             {
-                CreateWall(currentCell, neighbor, direction);
+                //wall probability
+                if (Random.value < wallProbability)
+                {
+                    CreateWall(currentCell, neighbor, direction);
+                }
+                else
+                {
+                    CreatePassage(currentCell, neighbor, direction); 
+                }
             }
         }
         else
@@ -99,14 +117,14 @@ public class Maze : MonoBehaviour {
         }
     }
 
-    private MazeCell CreateCell(IntVector2 coord)
+    private MazeCell CreateCell(IntVector3 coord)
     {
         MazeCell newCell = Instantiate(cellPrefab) as MazeCell;
-        cells[coord.x, coord.z] = newCell;
+        cells[coord.x, coord.y, coord.z] = newCell;
         newCell.coord = coord;
-        newCell.name = "Maze Cell" + coord.x + ", " + coord.z;
+        newCell.name = "Maze Cell" + coord.x + ", " + coord.y + ", " + coord.z;
         newCell.transform.parent = transform;
-        newCell.transform.localPosition = new Vector3(coord.x - size.x * 0.5f + 0.5f, 0f, coord.z - size.z * 0.5f + 0.5f);
+        newCell.transform.localPosition = new Vector3(coord.x - size.x * 0.5f + 0.5f, coord.y - size.y * 0.5f + 0.5f, coord.z - size.z * 0.5f + 0.5f);
         return newCell;
     }
 }

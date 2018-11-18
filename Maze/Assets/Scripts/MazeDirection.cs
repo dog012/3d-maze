@@ -4,13 +4,13 @@ using UnityEngine;
 
 public enum MazeDirection {
 
-    N,E,S,W
+    F,R,U,B,L,D
 
 }
 
 public static class MazeDirections
 {
-    public const int Count = 4;
+    public const int Count = 6;
 
     public static MazeDirection RandomValue
     {
@@ -20,38 +20,47 @@ public static class MazeDirections
         }
     }
 
-    private static MazeDirection[] opposites =
-    {
-        MazeDirection.S,
-        MazeDirection.W,
-        MazeDirection.N,
-        MazeDirection.E
-    };
     public static MazeDirection GetOpposite(this MazeDirection direction)
     {
-        return opposites[(int)direction];
+        return (int)direction < 3 ? direction + 3 : direction - 3;
     }
 
     private static Quaternion[] rotations =
     {
         Quaternion.identity,
         Quaternion.Euler(0f, 90f, 0f),
+        Quaternion.Euler(-90f, 0f, 0f),
         Quaternion.Euler(0f, 180f, 0f),
-        Quaternion.Euler(0f, 270f, 0f)
+        Quaternion.Euler(0f, -90f, 0f),
+        Quaternion.Euler(90f, 0f, 0f)
     };
     public static Quaternion ToRotation(this MazeDirection direction)
     {
         return rotations[(int)direction];
     }
 
-    private static IntVector2[] vectors =
-    {
-        new IntVector2(0,1),
-        new IntVector2(1,0),
-        new IntVector2(0,-1),
-        new IntVector2(-1,0)
+    //private static IntVector2[] vectors =
+    //{
+    //    new IntVector2(0,1),
+    //    new IntVector2(-1,0),
+    //    new IntVector2(0,-1),
+    //    new IntVector2(-1,0)
+    //};
+    //public static IntVector2 ToIntVector2(this MazeDirection direction)
+    //{
+    //    return vectors[(int)direction];
+    //}
+
+    private static IntVector3[] vectors =
+{
+        new IntVector3(0,0,1),
+        new IntVector3(1,0,0),
+        new IntVector3(0,1,0),
+        new IntVector3(0,0,-1),
+        new IntVector3(-1,0,0),
+        new IntVector3(0,-1,0)
     };
-    public static IntVector2 ToIntVector2(this MazeDirection direction)
+    public static IntVector3 ToIntVector3(this MazeDirection direction)
     {
         return vectors[(int)direction];
     }
